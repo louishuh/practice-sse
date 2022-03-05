@@ -14,14 +14,14 @@ import java.util.List;
 @RestController
 public class MessageChannelController {
 
-    private final MessageChannels channels = new MessageChannels();
+    private final MessageSinkContainer<MessageEvent> sinkContainer = new MessageSinkContainer<>();
 
     @GetMapping("/channels/{channelCode}")
     public Flux<ServerSentEvent<MessageEvent>> sse(@PathVariable String channelCode) {
 
         log.debug("requested sse: {}", Thread.currentThread().getName());
 
-        Flux<MessageEvent> messageEventFlux = channels.getStream(channelCode);
+        Flux<MessageEvent> messageEventFlux = sinkContainer.getStream(channelCode);
         Flux<MessageEvent> tickFlux = Flux.interval(Duration.ofSeconds(5))
                 .map(tick -> new MessageEvent(OffsetDateTime.now(), "HEARTBEAT"));
 
@@ -33,17 +33,17 @@ public class MessageChannelController {
     public void send(@PathVariable String channelCode, @RequestBody String message) {
 
         log.debug("requested send message: {}", Thread.currentThread().getName());
-        channels.post(channelCode, message);
+        sinkContainer.send(channelCode, new MessageEvent(OffsetDateTime.now(), message));
     }
 
     @GetMapping("/channels")
     public List<String> getChannels() {
-        return channels.getChannelsAsText();
+        return sinkContainer.getAliveCodes();
     }
 
     @GetMapping(value = "/channels", params = "size")
     public int getChannelCount() {
-        return channels.getChannelsAsText().size();
+        return sinkContainer.getAliveCodes().size();
     }
 
 }

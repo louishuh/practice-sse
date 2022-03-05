@@ -4,21 +4,19 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
-import java.time.OffsetDateTime;
-
 @Slf4j
-public class MessageChannel {
-    private final Sinks.Many<MessageEvent> sink;
+public class MessageSink<M> {
+    private final Sinks.Many<M> sink;
 
-    public MessageChannel() {
+    public MessageSink() {
         sink = Sinks.many().multicast().directAllOrNothing();
     }
 
-    void send(String message) {
-        sink.tryEmitNext(new MessageEvent(OffsetDateTime.now(), message));
+    void send(M message) {
+        sink.tryEmitNext(message);
     }
 
-    Flux<MessageEvent> toFlux() {
+    Flux<M> toFlux() {
         return sink.asFlux();
     }
 
