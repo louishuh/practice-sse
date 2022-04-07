@@ -3,6 +3,7 @@ package com.example.practicesse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
@@ -14,7 +15,12 @@ import java.util.List;
 @RestController
 public class MessageChannelController {
 
+    private final ThreadPoolTaskExecutor taskExecutor;
     private final MessageSinkContainer<MessageEvent> sinkContainer = new MessageSinkContainer<>();
+
+    public MessageChannelController(ThreadPoolTaskExecutor taskExecutor) {
+        this.taskExecutor = taskExecutor;
+    }
 
     @GetMapping("/channels/{channelCode}")
     public Flux<ServerSentEvent<MessageEvent>> sse(@PathVariable String channelCode) {
@@ -23,7 +29,10 @@ public class MessageChannelController {
 
         Flux<MessageEvent> messageEventFlux = sinkContainer.getStream(channelCode);
         Flux<MessageEvent> tickFlux = Flux.interval(Duration.ofSeconds(5))
-                .map(tick -> new MessageEvent(OffsetDateTime.now(), "HEARTBEAT"));
+                .map(tick -> {
+                    log.debug("heartbeat thread name: {}", Thread.currentThread().getName());
+                    return new MessageEvent(OffsetDateTime.now(), "HEARTBEAT");
+                });
 
         return Flux.merge(messageEventFlux, tickFlux)
                 .map(event -> ServerSentEvent.builder(event).build());

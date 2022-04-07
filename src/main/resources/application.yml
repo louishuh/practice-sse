@@ -1,3 +1,15 @@
 logging:
   level:
     com.example: debug
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+server:
+  reactive:
+    session:
+      timeout: 12s
+  netty:
+    connection-timeout: 10s
+    idle-timeout: 10s

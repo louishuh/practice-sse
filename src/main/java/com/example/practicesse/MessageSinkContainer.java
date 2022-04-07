@@ -23,12 +23,25 @@ public class MessageSinkContainer<M> {
                 })
                 .toFlux()
                 .doOnCancel(() -> {
+                    log.debug("doOnCancel");
                     MessageSink<M> messageSink = sinksMap.get(code);
                     if (messageSink.tryClosing()) {
                         sinksMap.remove(code);
                         log.debug("the channel [{}] closed. channels count: {}", code, sinksMap.size());
                     }
-                });
+                })
+                .doOnTerminate(() -> {
+                    log.debug("doOnTerminate");
+                })
+                .doAfterTerminate(() -> {
+                    log.debug("doAfterTerminate.");
+                })
+                .doFinally(signalType -> {
+                    log.debug("doFinally. signalType: {}", signalType);
+                })
+                .doOnEach(mSignal -> log.debug("doOnEach, signal: {}", mSignal))
+                .doOnDiscard(Object.class, obj -> log.debug("doOnDiscard. obj: {}", obj))
+                .doOnError(t -> log.debug("on error.", t));
     }
 
     public void send(String code, M message) {

@@ -1,5 +1,36 @@
 ###
+GET http://localhost:8080/channels/a
+Accept: text/event-stream
+
+
+###
 POST http://localhost:8080/channels/a
 Content-Type: text/plain
 
-aaa4
+message
+
+
+###
+###
+GET http://localhost:5050/session
+
+###
+PUT http://localhost:5050/session
+Content-Type: application/json
+
+{
+  "nickname": "John"
+}
+
+
+
+###
+GET http://localhost:5050/rooms/1/chat?sse
+
+###
+POST http://localhost:5050/rooms/1/chat
+Content-Type: application/json
+
+{
+  "text": "hi"
+}
